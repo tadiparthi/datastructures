@@ -1,3 +1,10 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define nelem(s) (sizeof(s)/sizeof(s[0]))
+#define nil 0
+
 int
 strtoken(char *inp, char **tok, int ntok, char *sep)
 {
