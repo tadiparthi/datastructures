@@ -1,164 +1,126 @@
 #include <iostream>
+#include <map>
 #include <vector>
-
-vector<string> split(const string &s, char delim) {
-    stringstream ss(s);
-    string item;
-    vector<string> tokens;
-    while (getline(ss, item, delim)) {
-        tokens.push_back(item);
-    }
-    return tokens;
-}
+using namespace std;
 
 #define nil 0
+#define alphabet 26
+#define char2off(s) int(s-'a')
+#define off2char(s) (s+'a')
 
-typedef struct Node Node;
-struct Node
+class Node
 {
-	Node	*child;
-	Node	*next;
-	char	data;
-	bool	word;
+	vector<Node*> child;
 	int	ref;
-
-	Node(char c) {
-		data = c;
+	bool	word;
+public:
+	Node() : child(alphabet, nil) {
 		ref = 1;
 		word = false;
-		next = nil;
-		child = nil;
+		
 	}
+	bool isWord() { return word; }
+	void setWord(){ word = true; }
+	void addChar(char c)
+	{
+		int off = char2off(c);
+		if(off < 0 || off >= alphabet)
+			return;
+		if(child[off] != nil)
+			return;
+		child[off] = new Node();
+	}
+
+	Node* getChar(char  c)
+	{
+		return getChild(char2off(c));
+	}
+
+	Node* getChild(int off)
+	{
+		if(off < 0 || off >= alphabet)
+			return nil;
+		 return child[off];
+	}
+	int getChildSize(){return alphabet;}
 };
 
-
-void
-insertnode(string s, Node **head)
+class Trie
 {
-	Node	**p, *q;
-	int		sz;
+	Node* head;
 
-	p = head;
-	q = *p;
-	sz = s.size();
+public:
+	Trie(){ head = new Node();}
 
-	for(int i = 0; i < sz; i++) {
-		for(q = *p; q != nil; q = q->next) {
-			if(q->data == s[i]) {
-				p = &q->child;
-				q->ref++;
-				break;
-			}
-		}
-		if(q == nil) {
-			q = new Node(s[i]);
-			if(!q)
-				return;
-			q->next = *p;
-			*p = q;
-			p = &q->child;
-		}
-	}
-
-	if(q)
-		q->word = true;
-}
-
-void
-deletehelp(Node *q)
-{
-	if(!q)
-		return;
-
-	deletehelp(q->next);
-	deletehelp(q->child);
-	free(q);
-}
-
-void
-deletenode(char *s, Node **head)
-{
-	Node	**p, *q;
-	int	i, len;
-
-	p = head;
-	q = *p;
-	len = strlen(s);
-	for(i = 0; i < len; i++) {
-		for(q = *p; q != nil; q = q->next) {
-			if(q->data == s[i]) {
-				q->ref--;
-				if(q->ref == 0) {
-					*p = q->next;
-					q->next = nil;
-					deletehelp(q);
-					return;
-				}
-			}
-			p = &q->next;
-		}
-		if(q == nil) {
-			printf("lost string %s\n", s);
+	void
+	addWordHelper(string &w, int off, Node *node)
+	{
+		if(w.size() == off) {
+			node->setWord();
 			return;
 		}
-		p = &q->child;
+		char c = w[off++];
+		node->addChar(c);
+		addWordHelper(w, off, node->getChar(c));
 	}
-}
 
-int
-findnode(Node *head, char *s)
-{
-	Node *q;
-	int i, len;
-
-	q = head;
-	len = strlen(s);
-
-	for(i = 0; i < len; i++) {
-		for(; q != nil; q = q->next) {
-			if(q->data == s[i]) {
-				break;
+	bool
+	searchWordHelper(string &w, int off, Node *node)
+	{
+		if(node == nil)
+			return false;
+		if(off == w.size())
+			return node->isWord();
+		char c = w[off++];
+		if(c == '.') {
+			for(int i = 0; i < alphabet; i++) {
+				bool r = searchWordHelper(w, off, node->getChild(i));
+				if(r)
+					return true;
 			}
+			return false;
 		}
-		if(q == nil)
-			return 0;
-		q =  q->child;
-	}
-	return 1;
-}
-
-void
-printtree(Node *head)
-{
-	Node	*q;
-
-	if(!head) {
-		return;
+		return searchWordHelper(w, off, node->getChar(c));
 	}
 
-	for(q = head; q != nil; q = q->next) {
-		printf(" %c", q->data);
+	void
+	addWord(string &w)
+	{
+		addWordHelper(w, 0, head);
 	}
-	for(q = head; q != nil; q = q->next) {
-		printtree(q->child);
+
+	bool
+	searchWord(string w)
+	{
+		return searchWordHelper(w, 0, head);
 	}
-	printf("\n");
-}
+
+	vector<string>
+	getWords()
+	{
+		vector<string> res;
+		string str ="";
+	//	getWordsHelper(head, res, str);
+		return res;
+	}
+};
 
 int
 main()
 {
-	Node *head = nil;
+	Trie t;
 
-	insertnode("car", &head);
-	insertnode("tac", &head);
-//	insertnode("cat", &head);
-//	insertnode("cab", &head);
+	vector<string> words = { "bad", "pad", "sad", "test", "hblqo" };	
+	for(auto w : words)
+		t.addWord(w);	
 
-	printtree(head);
-	printf("no  = %d\n", no);
-	printf(" ttt: %d\n", findnode(head, "bob"));
-	printf(" ca: %d\n", findnode(head, "ca"));
-	printf(" cab: %d\n", findnode(head, "cab"));
+	cout <<" finding=" << "assf"  <<" " << t.searchWord("assf") << endl;
+	cout <<" finding=" << "bssf"  <<" " << t.searchWord("bssf") << endl;
+	cout <<" finding=" << "bad"  <<" " << t.searchWord("bad") << endl;
+	cout <<" finding=" << "test"  <<" " << t.searchWord("test") << endl;
+	cout <<" finding=" << "hello"  <<" " << t.searchWord("hello") << endl;
+	cout <<" finding=" << "b.d"  <<" " << t.searchWord("b.d") << endl;
+	cout <<" finding=" << "h.l.o"  <<" " << t.searchWord("h.l.o") << endl;
+
+	vector<string> tot = t.getWords();
 }
-
