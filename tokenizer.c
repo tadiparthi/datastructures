@@ -53,7 +53,7 @@ main()
 void
 tokenize_str(const string &str, vector<string> &res, char delim)
 {
-	istringstream input(str);
+	stringstream input(str);
 	string tok;
 	while(getline(input, tok, delim)) {
 		res.push_back(tok);
